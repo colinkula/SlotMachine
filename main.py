@@ -1,15 +1,5 @@
 import random
 
-'''
-Text based slot machine
-
-1. Let the user deposit money 
-2. Allow the user to bet on 1, 2, or 3 lines on the slot machine
-3. Determine if the user won
-    multiply the users bet by the value of the line, add it to their balance, and allow them to continue playing
-
-'''
-
 ## Global variables
 MAX_LINES = 3
 MAX_BET = 100
@@ -18,6 +8,7 @@ MIN_BET = 5
 ROWS = 3
 COLS = 3
 
+# Dictonary representing symbol-count pairs.
 symbol_count = {
     "A": 2,
     "B": 4,
@@ -25,6 +16,7 @@ symbol_count = {
     "D": 8
 }
 
+# Dictonary representing symbol-value pairs. 
 symbol_value = {
     "A": 10,
     "B": 8,
@@ -32,17 +24,33 @@ symbol_value = {
     "D": 4
 }
 
+## This function takes in the list of columns, number of lines the user
+## would like to bet on, the bet value, and the dictionary representing 
+## symbol-value pairs. Each line that is bet on is checked to see if 
+## all the values in the row are the same. If they are the same, that
+## line is added to winning_lines and the winnings are adjusted 
+## accordingly. The winnings and winning_lines are returned.
 def check_winnings(columns, lines, bet, values):
     winnings = 0
     winning_lines = []
+
+    # Loop through the amount of lines that the user picked.
+    # If the user picked 2 lines, the top two lines will be 
+    # looped through.
     for line in range(lines):
-        symbol = columns[0][line]
+        desired_symbol = columns[0][line]
+
+        # Loop through each column check if the symbol in the column 
+        # matches the desired symbol.
         for column in columns:
-            desired_symbol = column[line]
-            if symbol != desired_symbol:
+            symbol = column[line]
+            if desired_symbol != symbol:
                 break
+        # When the for loop doesnt get broken out of, update winnings
+        # depending on the value multiplier and add the line number 
+        # to winning_lines list.
         else:
-            winnings += values[symbol] * bet
+            winnings += values[desired_symbol] * bet
             winning_lines.append(line + 1)
 
     return winnings, winning_lines
@@ -124,8 +132,7 @@ def get_number_of_lines():
     # Enter valid number of lines     
     # Loop until user correctly enters number
     while True:
-        lines = input("Enter the number of lines you would like to bet on.\n"
-            + "Select a number in the following range (1 - " + str(MAX_LINES) + ") ")
+        lines = input("How many lines would you like to bet on (1 - " + str(MAX_LINES) + ")? ")
 
         # Check that the number of lines is a viable number
         if lines.isdigit():
@@ -161,7 +168,11 @@ def get_bet():
     return bet
 
 def spin(balance):
+    # Get the number of lines the user would like to bet on.
     lines = get_number_of_lines()
+
+    # Get the amount the user would like to bet and check if they have sufficient funds to 
+    # actually bet that amount. Break when the user provide a plausible bet.
     while True:
         bet = get_bet()
         total_bet = bet * lines
@@ -173,19 +184,36 @@ def spin(balance):
 
     print(f"You are currently betting ${bet} on {lines} lines. Your total bet is equal to ${total_bet}.")
 
+    input("Press any key to spin.") 
+
+    # Get the values for this current spin and print the values.
     spin = get_spin(ROWS, COLS, symbol_count)
     print_spin(spin)
-    winnings, winning_lines = check_winnings(spin, lines, bet, symbol_value)
-    print(f"You won ${winnings}")
-    print(f"You won on lines: ", *winning_lines)
 
+    # Get the winnings and list of winning lines from the spin.
+    winnings, winning_lines = check_winnings(spin, lines, bet, symbol_value)
+
+    # Print the users winnings and lines won on.
+    print(f"You won ${winnings}")
+
+    if len(winning_lines) == 1:
+        print(f"You won on line:", *winning_lines)
+    elif len(winning_lines) != 0:
+        print(f"You won on lines:", *winning_lines)
+
+    # Return the difference of winnings and the total bet, 
+    # representing the gross winning value. This allows balance
+    # to be updated correctly.
     return winnings - total_bet
     
 def main():
+    # Get the initial balance of the user.
     balance = deposit()
+
+    # Game loop.
     while True:
         print(f"Current balance is ${balance}")
-        choice = input("Press enter to play (q to quit).")
+        choice = input("Press any key to play (q to quit).")
         if choice == "q":
             break
         balance += spin(balance)
